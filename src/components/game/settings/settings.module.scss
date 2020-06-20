@@ -31,3 +31,19 @@
   display: flex;
   border: 1px solid #000000;
 }
+
+.MovedShip {
+  opacity: 0;
+  visibility: hidden;
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  border: 1px solid red;
+  z-index: 1000;
+}
+
+.MovedShipVisible {
+  opacity: 1;
+  visibility: visible;
+}
