@@ -1,0 +1,33 @@
+.Settings {
+  display: flex;
+  width: 1200px;
+  margin: 0 auto;
+  padding-top: 50px;
+  padding-bottom: 50px;
+}
+
+.Description {
+  padding-left: 50px;
+}
+
+.ShipsList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ShipsListItem {
+  display: flex;
+  align-items: center;
+
+  margin-bottom: 10px;
+}
+
+.ShipNumber {
+  margin-right: 10px;
+}
+
+.Ship {
+  display: flex;
+  border: 1px solid #000000;
+}
