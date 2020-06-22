@@ -1,0 +1,1 @@
+export const SET_MOVED_SHIP_SIZE = 'SET_MOVED_SHIP_SIZE'

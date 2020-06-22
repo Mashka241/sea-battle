@@ -1,38 +1,32 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
+import { connect } from 'react-redux'
 import Field from '../../ui/field/field'
 import Cell from '../../ui/cell/cell'
 import clsx from 'clsx'
+import { actionCreator } from '../../../store/actions/action-creator'
 import classes from './settings.module.scss'
 
-const Settings = () => {
-  const [ships, setShips] = useState([
-    { size: 4, number: 1 },
-    { size: 3, number: 2 },
-    { size: 2, number: 3 },
-    { size: 1, number: 4 }
+const Settings = ({ ships, movedShipSize, setMovedShipSize }) => {
+  const [field, setField] = useState([
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
   ])
 
   const movedShipEl = useRef(null)
-  const [movedShipSize, setMovedShipSize] = useState(null)
+  const fieldRef = useRef(null)
 
-  const [shift, _setShift] = useState({
+  const [shift, setShift] = useState({
     x: 0,
     y: 0
   })
-
-  const shiftRef = useRef(shift)
-  // https://medium.com/geographit/accessing-react-state-in-event-listeners-with-usestate-and-useref-hooks-8cceee73c559
-
-  const setShift = (x, y) => {
-    shiftRef.current = {
-      x,
-      y
-    }
-    _setShift({
-      x,
-      y
-    })
-  }
 
   const renderShip = (number) => {
     const shipArr = []
@@ -42,11 +36,49 @@ const Settings = () => {
     return shipArr
   }
 
+  useEffect(() => {
+    document.addEventListener('mousemove', documentMouseMoveHandler)
+    document.addEventListener('mouseup', shipMouseUpHandler)
+    return () => {
+      document.removeEventListener('mousemove', documentMouseMoveHandler)
+      document.removeEventListener('mouseup', shipMouseUpHandler)
+    }
+  }, [movedShipSize])
+
   const documentMouseMoveHandler = (evt) => {
-    movedShipEl.current.style.transform = `translate(${evt.pageX - shiftRef.current.x}px, ${evt.pageY - shiftRef.current.y}px)`
+    if (movedShipSize) {
+      movedShipEl.current.style.transform = `translate(${evt.pageX - shift.x}px, ${evt.pageY - shift.y}px)`
+      const fieldCoords = {
+        top: fieldRef.current.getBoundingClientRect().top,
+        left: fieldRef.current.getBoundingClientRect().left,
+        right: fieldRef.current.getBoundingClientRect().right,
+        bottom: fieldRef.current.getBoundingClientRect().bottom
+      }
+      const currentShipCoords = {
+        top: movedShipEl.current.getBoundingClientRect().top,
+        left: movedShipEl.current.getBoundingClientRect().left,
+        right: movedShipEl.current.getBoundingClientRect().right,
+        bottom: movedShipEl.current.getBoundingClientRect().bottom
+      }
+
+      const isShipOnTheField = (fieldCoords.top < currentShipCoords.top) &&
+      (fieldCoords.left < currentShipCoords.left) &&
+      (fieldCoords.right > currentShipCoords.right) &&
+      (fieldCoords.bottom > currentShipCoords.bottom)
+
+      if (isShipOnTheField) {
+        const x = evt.clientX - fieldCoords.left - shift.x
+        const y = evt.clientY - fieldCoords.top - shift.y
+        const cellCoordsX = Math.round(x / 50)
+        const cellCoordsY = Math.round(y / 50)
+        console.log(cellCoordsX, cellCoordsY, movedShipSize)
+      }
+    }
   }
 
   const shipMouseUpHandler = (evt) => {
+    // const elemBelow = document.elementFromPoint(evt.clientX, evt.clientY)
+    console.log(evt.clientX, evt.clientY)
     setMovedShipSize(null)
     document.removeEventListener('mousemove', documentMouseMoveHandler)
     document.removeEventListener('mouseup', shipMouseUpHandler)
@@ -58,17 +90,17 @@ const Settings = () => {
       if (movedShipEl.current) {
         const x = evt.pageX - evt.currentTarget.getBoundingClientRect().left
         const y = evt.pageY - evt.currentTarget.getBoundingClientRect().top
-        setShift(x, y)
+        setShift({ x, y })
         movedShipEl.current.style.transform = `translate(${evt.pageX - x}px, ${evt.pageY - y}px)`
-        document.addEventListener('mousemove', documentMouseMoveHandler)
-        document.addEventListener('mouseup', shipMouseUpHandler)
       }
     }
   }
 
   return (
     <div className={classes.Settings}>
-      <Field />
+      <div ref={fieldRef}>
+        <Field field={field} />
+      </div>
 
       <div className={classes.Description}>
         <p>You can place you ships <button>randomly</button></p>
@@ -95,4 +127,19 @@ const Settings = () => {
   )
 }
 
-export default Settings
+const mapStateToProps = (state) => {
+  return {
+    ships: state.settings.ships,
+    movedShipSize: state.settings.movedShipSize
+  }
+}
+
+const mapDispatchToProps = (dispatch) => {
+  return {
+    setMovedShipSize: (data) => {
+      dispatch(actionCreator.setMovedShipSize(data))
+    }
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Settings)
