@@ -1,4 +1,6 @@
+import { combineReducers } from 'redux'
 import * as actionTypes from '../actions/action-types'
+import { createReducer } from '../../utils/store'
 
 const initialState = {
   ships: [
@@ -10,11 +12,17 @@ const initialState = {
   movedShipSize: null
 }
 
-export const settings = (state = initialState, action) => {
-  switch (action.type) {
-    case actionTypes.SET_MOVED_SHIP_SIZE:
-      return { ...initialState, movedShipSize: action.payload }
-    default:
-      return state
-  }
+const setMovedShipSize = (state, action) => {
+  return action.payload
 }
+
+const shipsReducer = createReducer(initialState.ships, {})
+
+const movedShipSizeReducer = createReducer(initialState.movedShipSize, {
+  [actionTypes.SET_MOVED_SHIP_SIZE]: setMovedShipSize
+})
+
+export const settings = combineReducers({
+  ships: shipsReducer,
+  movedShipSize: movedShipSizeReducer
+})
