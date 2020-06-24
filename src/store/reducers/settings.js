@@ -11,6 +11,8 @@ const initialState = {
   ],
   movedShipParams: {
     size: null,
+    headX: null,
+    headY: null,
     isHorizontal: true,
     isPositionCorrect: false
   }
@@ -24,11 +26,33 @@ const setMovedShipIsPositionCorrect = (state, action) => {
   return updateObject(state, { isPositionCorrect: action.payload })
 }
 
-const shipsReducer = createReducer(initialState.ships, {})
+const setMovedShipHeadPosition = (state, action) => {
+  return updateObject(state, { headX: action.payload.x, headY: action.payload.y })
+}
+
+const updateShips = (state, action) => {
+  const newShipsArr = state.map(ship => {
+    if (ship.size === action.payload) {
+      const newShip = {
+        ...ship,
+        number: ship.number - 1
+      }
+      return newShip
+    } else {
+      return { ...ship }
+    }
+  })
+  return newShipsArr
+}
+
+const shipsReducer = createReducer(initialState.ships, {
+  [actionTypes.UPDATE_SHIPS]: updateShips
+})
 
 const movedShipParamsReducer = createReducer(initialState.movedShipParams, {
   [actionTypes.SET_MOVED_SHIP_SIZE]: setMovedShipSize,
-  [actionTypes.SET_MOVED_SHIP_IS_POSITION_CORRECT]: setMovedShipIsPositionCorrect
+  [actionTypes.SET_MOVED_SHIP_IS_POSITION_CORRECT]: setMovedShipIsPositionCorrect,
+  [actionTypes.SET_MOVED_SHIP_HEAD_POSITION]: setMovedShipHeadPosition
 })
 
 export const settings = combineReducers({

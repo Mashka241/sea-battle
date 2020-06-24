@@ -6,13 +6,13 @@ import clsx from 'clsx'
 import { actionCreator } from '../../../store/actions/action-creator'
 import classes from './settings.module.scss'
 
-const Settings = ({ ships, movedShipParams, setMovedShipSize, setMovedShipIsPositionCorrect }) => {
+const Settings = ({ ships, movedShipParams, setMovedShipSize, setMovedShipIsPositionCorrect, updateShips, setMovedShipHeadPosition }) => {
   const [field, setField] = useState([
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -43,6 +43,18 @@ const Settings = ({ ships, movedShipParams, setMovedShipSize, setMovedShipIsPosi
     if (isHorizontal) {
       for (let i = startY; i < (startY + 3); i++) {
         for (let j = startX; j < (startX + checkedSize); j++) {
+          if (field[i]) {
+            if (field[i][j] === 1) {
+              return false
+            }
+          } else {
+            break
+          }
+        }
+      }
+    } else {
+      for (let i = startX; i < (startX + 3); i++) {
+        for (let j = startY; j < (startY + checkedSize); j++) {
           if (field[i]) {
             if (field[i][j] === 1) {
               return false
@@ -83,16 +95,35 @@ const Settings = ({ ships, movedShipParams, setMovedShipSize, setMovedShipIsPosi
         const cellCoordsX = Math.round(x / 50)
         const cellCoordsY = Math.round(y / 50)
         const isPositionCorrect = checkShipPosition(cellCoordsX, cellCoordsY, movedShipParams.size)
+        setMovedShipHeadPosition({
+          x: cellCoordsX,
+          y: cellCoordsY
+        })
         setMovedShipIsPositionCorrect(isPositionCorrect)
       }
     }
   }
 
-  const shipMouseUpHandler = (evt) => {
-    console.log(evt.clientX, evt.clientY)
+  const placeShip = ({ size, headX, headY, isHorizontal }) => {
+    const newField = field.map(row => {
+      return [...row]
+    })
+    newField[headY][headX] = 1
 
+    if (isHorizontal) {
+      for (let i = 1; i < size; i++) {
+        newField[headY][headX + i] = 1
+      }
+    }
+
+    setField(newField)
+  }
+
+  const shipMouseUpHandler = () => {
     if (movedShipParams.isPositionCorrect) {
-      console.log('place ship')
+      updateShips(movedShipParams.size)
+      placeShip(movedShipParams)
+      setMovedShipSize(null)
     } else {
       setMovedShipSize(null)
     }
@@ -117,7 +148,7 @@ const Settings = ({ ships, movedShipParams, setMovedShipSize, setMovedShipIsPosi
       document.removeEventListener('mousemove', documentMouseMoveHandler)
       document.removeEventListener('mouseup', shipMouseUpHandler)
     }
-  }, [movedShipParams, documentMouseMoveHandler, shipMouseUpHandler])
+  }, [documentMouseMoveHandler, shipMouseUpHandler])
 
   return (
     <div className={classes.Settings}>
@@ -164,6 +195,12 @@ const mapDispatchToProps = (dispatch) => {
     },
     setMovedShipIsPositionCorrect: (data) => {
       dispatch(actionCreator.setMovedShipIsPositionCorrect(data))
+    },
+    updateShips: (data) => {
+      dispatch(actionCreator.updateShips(data))
+    },
+    setMovedShipHeadPosition: (data) => {
+      dispatch(actionCreator.setMovedShipHeadPosition(data))
     }
   }
 }
