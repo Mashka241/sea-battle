@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { connect } from 'react-redux'
 import Field from '../../ui/field/field'
 import Cell from '../../ui/cell/cell'
@@ -6,13 +6,13 @@ import clsx from 'clsx'
 import { actionCreator } from '../../../store/actions/action-creator'
 import classes from './settings.module.scss'
 
-const Settings = ({ ships, movedShipSize, setMovedShipSize }) => {
+const Settings = ({ ships, movedShipParams, setMovedShipSize, setMovedShipIsPositionCorrect }) => {
   const [field, setField] = useState([
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 1, 1, 1, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -36,17 +36,28 @@ const Settings = ({ ships, movedShipSize, setMovedShipSize }) => {
     return shipArr
   }
 
-  useEffect(() => {
-    document.addEventListener('mousemove', documentMouseMoveHandler)
-    document.addEventListener('mouseup', shipMouseUpHandler)
-    return () => {
-      document.removeEventListener('mousemove', documentMouseMoveHandler)
-      document.removeEventListener('mouseup', shipMouseUpHandler)
+  const checkShipPosition = (x, y, size, isHorizontal = true) => {
+    const startX = x - 1
+    const startY = y - 1
+    const checkedSize = size + 2
+    if (isHorizontal) {
+      for (let i = startY; i < (startY + 3); i++) {
+        for (let j = startX; j < (startX + checkedSize); j++) {
+          if (field[i]) {
+            if (field[i][j] === 1) {
+              return false
+            }
+          } else {
+            break
+          }
+        }
+      }
     }
-  }, [movedShipSize])
+    return true
+  }
 
   const documentMouseMoveHandler = (evt) => {
-    if (movedShipSize) {
+    if (movedShipParams.size) {
       movedShipEl.current.style.transform = `translate(${evt.pageX - shift.x}px, ${evt.pageY - shift.y}px)`
       const fieldCoords = {
         top: fieldRef.current.getBoundingClientRect().top,
@@ -71,17 +82,20 @@ const Settings = ({ ships, movedShipSize, setMovedShipSize }) => {
         const y = evt.clientY - fieldCoords.top - shift.y
         const cellCoordsX = Math.round(x / 50)
         const cellCoordsY = Math.round(y / 50)
-        console.log(cellCoordsX, cellCoordsY, movedShipSize)
+        const isPositionCorrect = checkShipPosition(cellCoordsX, cellCoordsY, movedShipParams.size)
+        setMovedShipIsPositionCorrect(isPositionCorrect)
       }
     }
   }
 
   const shipMouseUpHandler = (evt) => {
-    // const elemBelow = document.elementFromPoint(evt.clientX, evt.clientY)
     console.log(evt.clientX, evt.clientY)
-    setMovedShipSize(null)
-    document.removeEventListener('mousemove', documentMouseMoveHandler)
-    document.removeEventListener('mouseup', shipMouseUpHandler)
+
+    if (movedShipParams.isPositionCorrect) {
+      console.log('place ship')
+    } else {
+      setMovedShipSize(null)
+    }
   }
 
   const shipMouseDownHandler = (evt, number, size) => {
@@ -96,6 +110,15 @@ const Settings = ({ ships, movedShipSize, setMovedShipSize }) => {
     }
   }
 
+  useEffect(() => {
+    document.addEventListener('mousemove', documentMouseMoveHandler)
+    document.addEventListener('mouseup', shipMouseUpHandler)
+    return () => {
+      document.removeEventListener('mousemove', documentMouseMoveHandler)
+      document.removeEventListener('mouseup', shipMouseUpHandler)
+    }
+  }, [movedShipParams, documentMouseMoveHandler, shipMouseUpHandler])
+
   return (
     <div className={classes.Settings}>
       <div ref={fieldRef}>
@@ -105,7 +128,7 @@ const Settings = ({ ships, movedShipSize, setMovedShipSize }) => {
       <div className={classes.Description}>
         <p>You can place you ships <button>randomly</button></p>
         <p>or drag and drop them on the playfield. To place ship vertically click on it with right mouse button</p>
-        <div ref={movedShipEl} className={clsx(classes.MovedShip, movedShipSize && classes.MovedShipVisible)}>{renderShip(movedShipSize)}</div>
+        <div ref={movedShipEl} className={clsx(classes.MovedShip, movedShipParams.size && classes.MovedShipVisible)}>{renderShip(movedShipParams.size)}</div>
         <ul className={classes.ShipsList}>
           {ships.map(ship => {
             return (
@@ -130,7 +153,7 @@ const Settings = ({ ships, movedShipSize, setMovedShipSize }) => {
 const mapStateToProps = (state) => {
   return {
     ships: state.settings.ships,
-    movedShipSize: state.settings.movedShipSize
+    movedShipParams: state.settings.movedShipParams
   }
 }
 
@@ -138,6 +161,9 @@ const mapDispatchToProps = (dispatch) => {
   return {
     setMovedShipSize: (data) => {
       dispatch(actionCreator.setMovedShipSize(data))
+    },
+    setMovedShipIsPositionCorrect: (data) => {
+      dispatch(actionCreator.setMovedShipIsPositionCorrect(data))
     }
   }
 }
