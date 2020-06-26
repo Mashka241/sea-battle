@@ -6,7 +6,7 @@ import clsx from 'clsx'
 import { actionCreator } from '../../../store/actions/action-creator'
 import classes from './settings.module.scss'
 
-const Settings = ({ ships, movedShipParams, setMovedShipSize, setMovedShipIsPositionCorrect, updateShips, setMovedShipHeadPosition }) => {
+const Settings = ({ ships, movedShipParams, setMovedShipSize, setMovedShipIsPositionCorrect, updateShips, setMovedShipHeadPosition, setShipsHorizontalPosition, setMovedShipHorizontalPosition }) => {
   const [field, setField] = useState([
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -129,9 +129,10 @@ const Settings = ({ ships, movedShipParams, setMovedShipSize, setMovedShipIsPosi
     }
   }
 
-  const shipMouseDownHandler = (evt, number, size) => {
+  const shipMouseDownHandler = (evt, number, size, isHorizontal) => {
     if (number) {
       setMovedShipSize(size)
+      setMovedShipHorizontalPosition(isHorizontal)
       if (movedShipEl.current) {
         const x = evt.pageX - evt.currentTarget.getBoundingClientRect().left
         const y = evt.pageY - evt.currentTarget.getBoundingClientRect().top
@@ -139,6 +140,10 @@ const Settings = ({ ships, movedShipParams, setMovedShipSize, setMovedShipIsPosi
         movedShipEl.current.style.transform = `translate(${evt.pageX - x}px, ${evt.pageY - y}px)`
       }
     }
+  }
+
+  const turnButtonClickHandler = (size) => {
+    setShipsHorizontalPosition(size)
   }
 
   useEffect(() => {
@@ -159,15 +164,21 @@ const Settings = ({ ships, movedShipParams, setMovedShipSize, setMovedShipIsPosi
       <div className={classes.Description}>
         <p>You can place you ships <button>randomly</button></p>
         <p>or drag and drop them on the playfield. To place ship vertically click on it with right mouse button</p>
-        <div ref={movedShipEl} className={clsx(classes.MovedShip, movedShipParams.size && classes.MovedShipVisible)}>{renderShip(movedShipParams.size)}</div>
+        <div ref={movedShipEl} className={clsx(classes.MovedShip, movedShipParams.size && classes.MovedShipVisible, movedShipParams.isHorizontal && classes.MovedShipHorizontal)}>{renderShip(movedShipParams.size)}</div>
         <ul className={classes.ShipsList}>
           {ships.map(ship => {
             return (
               <li key={`settings-ship-${ship.size}`} className={classes.ShipsListItem}>
                 <span className={classes.ShipNumber}>{ship.number}x </span>
+                {ship.size > 1
+                  ? (
+                    <button className={classes.TurnButton} onClick={() => { turnButtonClickHandler(ship.size) }}>
+                      {/* <span>turn the ship</span> */}
+                    </button>
+                  ) : null}
                 <div
-                  className={classes.Ship}
-                  onMouseDown={(evt) => { shipMouseDownHandler(evt, ship.number, ship.size) }}
+                  className={clsx(classes.Ship, ship.isHorizontal && classes.ShipHorizontal)}
+                  onMouseDown={(evt) => { shipMouseDownHandler(evt, ship.number, ship.size, ship.isHorizontal) }}
                 >
                   {renderShip(ship.size)}
                 </div>
@@ -201,6 +212,12 @@ const mapDispatchToProps = (dispatch) => {
     },
     setMovedShipHeadPosition: (data) => {
       dispatch(actionCreator.setMovedShipHeadPosition(data))
+    },
+    setShipsHorizontalPosition: (data) => {
+      dispatch(actionCreator.setShipsHorizontalPosition(data))
+    },
+    setMovedShipHorizontalPosition: (data) => {
+      dispatch(actionCreator.setMovedShipHorizontalPosition(data))
     }
   }
 }

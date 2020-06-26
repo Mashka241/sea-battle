@@ -17,10 +17,16 @@
 }
 
 .ShipsListItem {
+  position: relative;
   display: flex;
   align-items: center;
-
   margin-bottom: 10px;
+}
+
+.TurnButton {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .ShipNumber {
@@ -28,8 +34,12 @@
 }
 
 .Ship {
-  display: flex;
   border: 1px solid #000000;
+}
+
+.ShipHorizontal,
+.MovedShipHorizontal {
+  display: flex;
 }
 
 .MovedShip {
@@ -38,7 +48,6 @@
   position: absolute;
   top: 0;
   left: 0;
-  display: flex;
   border: 1px solid #000000;
   z-index: 1000;
 }
